@@ -991,7 +991,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
         mActivityClientController = new ActivityClientController(this);
 
         mTaskChangeNotificationController =
-                new TaskChangeNotificationController(mGlobalLock, mTaskSupervisor, mH);
+                new TaskChangeNotificationController(mTaskSupervisor, mH);
         mLockTaskController = new LockTaskController(mContext, mTaskSupervisor, mH,
                 mTaskChangeNotificationController);
         mActivityStartController = new ActivityStartController(this);
