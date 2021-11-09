@@ -1059,13 +1059,14 @@ public class OomAdjuster {
         updateUidsLSP(activeUids, nowElapsed);
 
         synchronized (mService.mProcessStats.mLock) {
-            if (mService.mProcessStats.shouldWriteNowLocked(now)) {
+            final long nowUptime = SystemClock.uptimeMillis();
+            if (mService.mProcessStats.shouldWriteNowLocked(nowUptime)) {
                 mService.mHandler.post(new ActivityManagerService.ProcStatsRunnable(mService,
                         mService.mProcessStats));
             }
 
             // Run this after making sure all procstates are updated.
-            mService.mProcessStats.updateTrackingAssociationsLocked(mAdjSeq, now);
+            mService.mProcessStats.updateTrackingAssociationsLocked(mAdjSeq, nowUptime);
         }
 
         if (DEBUG_OOM_ADJ) {
@@ -2238,7 +2239,7 @@ public class OomAdjuster {
                                         newAdj = ProcessList.PERSISTENT_SERVICE_ADJ;
                                         schedGroup = ProcessList.SCHED_GROUP_DEFAULT;
                                         procState = ActivityManager.PROCESS_STATE_PERSISTENT;
-                                        cr.trackProcState(procState, mAdjSeq, now);
+                                        cr.trackProcState(procState, mAdjSeq);
                                         trackedProcState = true;
                                     }
                                 } else if ((cr.flags & Context.BIND_NOT_PERCEPTIBLE) != 0
@@ -2342,7 +2343,7 @@ public class OomAdjuster {
                         }
 
                         if (!trackedProcState) {
-                            cr.trackProcState(clientProcState, mAdjSeq, now);
+                            cr.trackProcState(clientProcState, mAdjSeq);
                         }
 
                         if (procState > clientProcState) {
@@ -2484,7 +2485,7 @@ public class OomAdjuster {
                     }
                 }
 
-                conn.trackProcState(clientProcState, mAdjSeq, now);
+                conn.trackProcState(clientProcState, mAdjSeq);
                 if (procState > clientProcState) {
                     procState = clientProcState;
                     state.setCurRawProcState(procState);
@@ -2942,7 +2943,7 @@ public class OomAdjuster {
             if (!doingAll) {
                 synchronized (mService.mProcessStats.mLock) {
                     mService.setProcessTrackerStateLOSP(app,
-                            mService.mProcessStats.getMemFactorLocked(), now);
+                            mService.mProcessStats.getMemFactorLocked());
                 }
             } else {
                 state.setProcStateChanged(true);
