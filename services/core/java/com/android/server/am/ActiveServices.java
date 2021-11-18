@@ -5552,7 +5552,7 @@ public final class ActiveServices {
             ComponentName service) {
         mAm.crashApplicationWithTypeWithExtras(
                 app.uid, app.getPid(), app.info.packageName, app.userId,
-                "Context.startForegroundService() did not then call " + "Service.startForeground(): "
+                "Context.startForegroundService() did not then call Service.startForeground(): "
                     + serviceRecord, false /*force*/,
                 ForegroundServiceDidNotStartInTimeException.TYPE_ID,
                 ForegroundServiceDidNotStartInTimeException.createExtrasForService(service));
