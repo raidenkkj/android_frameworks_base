@@ -1200,6 +1200,27 @@ class StageCoordinator implements SplitLayout.SplitLayoutHandler,
     }
 
     @Override
+    public void onTransitionMerged(@NonNull IBinder transition) {
+        // Once the pending enter transition got merged, make sure to bring divider bar visible and
+        // clear the pending transition from cache to prevent mess-up the following state.
+        if (transition == mSplitTransitions.mPendingEnter) {
+            mSplitLayout.init();
+            setDividerVisibility(true);
+            setSplitsVisible(true);
+            mShouldUpdateRecents = true;
+            updateRecentTasksSplitPair();
+
+            if (!mLogger.hasStartedSession()) {
+                mLogger.logEnter(mSplitLayout.getDividerPositionAsFraction(),
+                        getMainStagePosition(), mMainStage.getTopChildTaskUid(),
+                        getSideStagePosition(), mSideStage.getTopChildTaskUid(),
+                        mSplitLayout.isLandscape());
+            }
+            mSplitTransitions.mPendingEnter = null;
+        }
+    }
+
+    @Override
     public boolean startAnimation(@NonNull IBinder transition,
             @NonNull TransitionInfo info,
             @NonNull SurfaceControl.Transaction startTransaction,

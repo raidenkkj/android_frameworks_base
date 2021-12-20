@@ -260,10 +260,6 @@ public class RemoteTransitionCompat implements Parcelable {
                         ++pauseMatches;
                     }
                 }
-                if (openingTasks.get(i).getContainer().equals(mPausingTasks.get(i))) {
-                    // In this case, we are "returning" to an already running app, so just consume
-                    // the merge and do nothing.
-                }
             }
             if (pauseMatches > 0) {
                 if (pauseMatches != mPausingTasks.size()) {
@@ -289,9 +285,9 @@ public class RemoteTransitionCompat implements Parcelable {
                 t.reparent(target.leash.mSurfaceControl, mInfo.getRootLeash());
                 t.setLayer(target.leash.mSurfaceControl, layer);
                 t.hide(target.leash.mSurfaceControl);
-                t.apply();
                 targets[i] = target;
             }
+            t.apply();
             recents.onTasksAppeared(targets);
             return true;
         }
