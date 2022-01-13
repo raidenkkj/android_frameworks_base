@@ -2521,7 +2521,7 @@ public class ExifInterface {
             }
             if (datetime == null) return -1;
             return datetime.getTime();
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
             return -1;
         }
     }
