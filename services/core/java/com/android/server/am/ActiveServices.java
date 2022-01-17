@@ -4058,7 +4058,7 @@ public final class ActiveServices {
             // for a previous process to come up.  To deal with this, we store
             // in the service any current isolated process it is running in or
             // waiting to have come up.
-            app = r.isolatedProc;
+            app = r.isolationHostProc;
             if (WebViewZygote.isMultiprocessEnabled()
                     && r.serviceInfo.packageName.equals(WebViewZygote.getPackageName())) {
                 hostingRecord = HostingRecord.byWebviewZygote(r.instanceName);
@@ -4085,7 +4085,7 @@ public final class ActiveServices {
                 return msg;
             }
             if (isolated) {
-                r.isolatedProc = app;
+                r.isolationHostProc = app;
             }
         }
 
@@ -4885,7 +4885,7 @@ public final class ActiveServices {
             try {
                 for (int i=0; i<mPendingServices.size(); i++) {
                     sr = mPendingServices.get(i);
-                    if (proc != sr.isolatedProc && (proc.uid != sr.appInfo.uid
+                    if (proc != sr.isolationHostProc && (proc.uid != sr.appInfo.uid
                             || !processName.equals(sr.processName))) {
                         continue;
                     }
@@ -4925,7 +4925,7 @@ public final class ActiveServices {
             boolean didImmediateRestart = false;
             for (int i=0; i<mRestartingServices.size(); i++) {
                 sr = mRestartingServices.get(i);
-                if (proc != sr.isolatedProc && (proc.uid != sr.appInfo.uid
+                if (proc != sr.isolationHostProc && (proc.uid != sr.appInfo.uid
                         || !processName.equals(sr.processName))) {
                     continue;
                 }
@@ -4954,9 +4954,9 @@ public final class ActiveServices {
             ServiceRecord sr = mPendingServices.get(i);
             if ((proc.uid == sr.appInfo.uid
                     && proc.processName.equals(sr.processName))
-                    || sr.isolatedProc == proc) {
+                    || sr.isolationHostProc == proc) {
                 Slog.w(TAG, "Forcing bringing down service: " + sr);
-                sr.isolatedProc = null;
+                sr.isolationHostProc = null;
                 mPendingServices.remove(i);
                 size = mPendingServices.size();
                 i--;
@@ -4993,7 +4993,7 @@ public final class ActiveServices {
                     stopServiceAndUpdateAllowlistManagerLocked(service);
                 }
                 service.setProcess(null, null, 0, null);
-                service.isolatedProc = null;
+                service.isolationHostProc = null;
                 if (mTmpCollectionResults == null) {
                     mTmpCollectionResults = new ArrayList<>();
                 }
@@ -5160,7 +5160,7 @@ public final class ActiveServices {
                 sr.app.mServices.updateBoundClientUids();
             }
             sr.setProcess(null, null, 0, null);
-            sr.isolatedProc = null;
+            sr.isolationHostProc = null;
             sr.executeNesting = 0;
             synchronized (mAm.mProcessStats.mLock) {
                 sr.forceClearTracker();
