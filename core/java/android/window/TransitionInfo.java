@@ -620,7 +620,7 @@ public final class TransitionInfo implements Parcelable {
             return options;
         }
 
-        public static AnimationOptions makeThumnbnailAnimOptions(HardwareBuffer srcThumb,
+        public static AnimationOptions makeThumbnailAnimOptions(HardwareBuffer srcThumb,
                 int startX, int startY, boolean scaleUp) {
             AnimationOptions options = new AnimationOptions(
                     scaleUp ? ANIM_THUMBNAIL_SCALE_UP : ANIM_THUMBNAIL_SCALE_DOWN);

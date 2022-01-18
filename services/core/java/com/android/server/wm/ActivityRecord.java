@@ -4514,7 +4514,7 @@ public final class ActivityRecord extends WindowToken implements WindowManagerSe
                         pendingOptions.getStartX(), pendingOptions.getStartY(),
                         pendingOptions.getAnimationStartedListener(),
                         scaleUp);
-                options = AnimationOptions.makeThumnbnailAnimOptions(buffer,
+                options = AnimationOptions.makeThumbnailAnimOptions(buffer,
                         pendingOptions.getStartX(), pendingOptions.getStartY(), scaleUp);
                 startCallback = pendingOptions.getAnimationStartedListener();
                 if (intent.getSourceBounds() == null && buffer != null) {
