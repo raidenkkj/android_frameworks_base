@@ -43,7 +43,6 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.VibrationAttributes;
-import android.os.Vibrator;
 import android.testing.AndroidTestingRunner;
 import android.testing.TestableLooper.RunWithLooper;
 import android.view.LayoutInflater;
@@ -61,6 +60,7 @@ import com.android.systemui.keyguard.ScreenLifecycle;
 import com.android.systemui.plugins.FalsingManager;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.statusbar.LockscreenShadeTransitionController;
+import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.phone.KeyguardBypassController;
 import com.android.systemui.statusbar.phone.StatusBar;
 import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
@@ -137,7 +137,7 @@ public class UdfpsControllerTest extends SysuiTestCase {
     @Mock
     private ScreenLifecycle mScreenLifecycle;
     @Mock
-    private Vibrator mVibrator;
+    private VibratorHelper mVibrator;
     @Mock
     private UdfpsHapticsSimulator mUdfpsHapticsSimulator;
     @Mock

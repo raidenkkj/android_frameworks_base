@@ -17,9 +17,11 @@
 package com.android.systemui.statusbar;
 
 import android.content.Context;
+import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.database.ContentObserver;
 import android.media.AudioAttributes;
-import android.os.AsyncTask;
+import android.os.VibrationAttributes;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.os.VibrationEffect;
@@ -27,6 +29,11 @@ import android.os.Vibrator;
 import android.provider.Settings;
 
 import com.android.systemui.dagger.SysUISingleton;
+import com.android.systemui.dagger.qualifiers.Background;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
@@ -43,19 +50,20 @@ public class VibratorHelper {
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
                     .build();
-
     final private ContentObserver mVibrationObserver = new ContentObserver(Handler.getMain()) {
         @Override
         public void onChange(boolean selfChange) {
             updateHapticFeedBackEnabled();
         }
     };
+    private final Executor mExecutor;
 
     /**
      */
     @Inject
-    public VibratorHelper(Context context) {
+    public VibratorHelper(Context context, @Background Executor executor) {
         mContext = context;
+        mExecutor = executor;
         mVibrator = context.getSystemService(Vibrator.class);
 
         mContext.getContentResolver().registerContentObserver(
@@ -63,17 +71,79 @@ public class VibratorHelper {
                 mVibrationObserver);
         mVibrationObserver.onChange(false /* selfChange */);
     }
-
-    public void vibrate(final int effectId) {
-        if (mHapticFeedbackEnabled) {
-            AsyncTask.execute(() ->
-                    mVibrator.vibrate(VibrationEffect.get(effectId, false /* fallback */),
-                            STATUS_BAR_VIBRATION_ATTRIBUTES));
-        }
-    }
-
+    
     private void updateHapticFeedBackEnabled() {
         mHapticFeedbackEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.HAPTIC_FEEDBACK_ENABLED, 0, UserHandle.USER_CURRENT) != 0;
+    }
+
+    /**
+     * @see Vibrator#vibrate(long)
+     */
+    public void vibrate(final int effectId) {
+    	if (mHapticFeedbackEnabled) {
+        if (!hasVibrator()) {
+            return;
+        }
+            mExecutor.execute(() ->
+                   mVibrator.vibrate(VibrationEffect.get(effectId, false /* fallback */),
+                            STATUS_BAR_VIBRATION_ATTRIBUTES));
+	}
+    }
+
+    /**
+     * @see Vibrator#vibrate(int, String, VibrationEffect, String, VibrationAttributes)
+     */
+    public void vibrate(int uid, String opPkg, @NonNull VibrationEffect vibe,
+            String reason, @NonNull VibrationAttributes attributes) {
+    	if (mHapticFeedbackEnabled) {
+        if (!hasVibrator()) {
+            return;
+        }
+	}
+        mExecutor.execute(() -> mVibrator.vibrate(uid, opPkg, vibe, reason, attributes));
+    }
+
+    /**
+     * @see Vibrator#vibrate(VibrationEffect, AudioAttributes)
+     */
+    public void vibrate(@NonNull VibrationEffect effect, @NonNull AudioAttributes attributes) {
+    	if (mHapticFeedbackEnabled) {
+        if (!hasVibrator()) {
+            return;
+        }
+        mExecutor.execute(() -> mVibrator.vibrate(effect, attributes));
+       }
+    }
+
+    /**
+     * @see Vibrator#vibrate(VibrationEffect)
+     */
+    public void vibrate(@NotNull VibrationEffect effect) {
+    	if (mHapticFeedbackEnabled) {
+        if (!hasVibrator()) {
+            return;
+        }
+        mExecutor.execute(() -> mVibrator.vibrate(effect));
+        }
+    }
+
+    /**
+     * @see Vibrator#hasVibrator()
+     */
+    public boolean hasVibrator() {
+        return mVibrator != null && mVibrator.hasVibrator();
+    }
+
+    /**
+     * @see Vibrator#cancel()
+     */
+    public void cancel() {
+    	if (mHapticFeedbackEnabled) {
+        if (!hasVibrator()) {
+            return;
+        }
+        mExecutor.execute(mVibrator::cancel);
+        }
     }
 }
