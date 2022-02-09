@@ -337,8 +337,6 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
     private final InteractionJankMonitor mInteractionJankMonitor;
     private final LatencyTracker mLatencyTracker;
     private boolean mLogoutEnabled;
-    // cached value to avoid IPCs
-    private boolean mIsUdfpsEnrolled;
     private boolean mIsFaceEnrolled;
     // If the user long pressed the lock icon, disabling face auth for the current session.
     private boolean mLockIconPressed;
@@ -2175,10 +2173,6 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
         mSettingsObserver.observe();
     }
 
-    private void updateUdfpsEnrolled(int userId) {
-        mIsUdfpsEnrolled = mAuthController.isUdfpsEnrolled(userId);
-    }
-
     private void updateFaceEnrolled(int userId) {
         mIsFaceEnrolled = whitelistIpcs(
                 () -> mFaceManager != null && mFaceManager.isHardwareDetected()
@@ -2190,7 +2184,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
      * @return true if there's at least one udfps enrolled for the current user.
      */
     public boolean isUdfpsEnrolled() {
-        return mIsUdfpsEnrolled;
+        return mAuthController.isUdfpsEnrolled(getCurrentUser());
     }
 
     /**
@@ -2244,7 +2238,6 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
             return;
         }
 
-        updateUdfpsEnrolled(getCurrentUser());
         final boolean shouldListenForFingerprint = shouldListenForFingerprint(isUdfpsSupported());
         final boolean runningOrRestarting = mFingerprintRunningState == BIOMETRIC_STATE_RUNNING
                 || mFingerprintRunningState == BIOMETRIC_STATE_CANCELLING_RESTARTING;
