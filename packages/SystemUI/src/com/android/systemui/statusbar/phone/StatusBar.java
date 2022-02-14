@@ -382,6 +382,7 @@ public class StatusBar extends SystemUI implements
 
     private final LockscreenShadeTransitionController mLockscreenShadeTransitionController;
     private StatusBarCommandQueueCallbacks mCommandQueueCallbacks;
+    private float mTransitionToFullShadeProgress = 0f;
 
     void setWindowState(int state) {
         mStatusBarWindowState =  state;
@@ -4063,6 +4064,15 @@ public class StatusBar extends SystemUI implements
         updateScrimController();
     }
 
+    /**
+     * Set the amount of progress we are currently in if we're transitioning to the full shade.
+     * 0.0f means we're not transitioning yet, while 1 means we're all the way in the full
+     * shade.
+     */
+    public void setTransitionToFullShadeProgress(float transitionToFullShadeProgress) {
+        mTransitionToFullShadeProgress = transitionToFullShadeProgress;
+    }
+
     @VisibleForTesting
     public void updateScrimController() {
         Trace.beginSection("StatusBar#updateScrimController");
@@ -4085,7 +4095,8 @@ public class StatusBar extends SystemUI implements
                 || mBiometricUnlockController.isWakeAndUnlock());
 
         if (mStatusBarKeyguardViewManager.isShowingAlternateAuth()) {
-            if (mState == StatusBarState.SHADE || mState == StatusBarState.SHADE_LOCKED) {
+            if (mState == StatusBarState.SHADE || mState == StatusBarState.SHADE_LOCKED
+                    || mTransitionToFullShadeProgress > 0f) {
                 mScrimController.transitionTo(ScrimState.AUTH_SCRIMMED_SHADE);
             } else {
                 mScrimController.transitionTo(ScrimState.AUTH_SCRIMMED);
