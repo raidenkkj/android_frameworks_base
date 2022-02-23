@@ -30,8 +30,11 @@ import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.UiEventLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 import com.android.systemui.dump.DumpManager;
+import com.android.systemui.flags.Flags;
+import com.android.systemui.media.MediaFlags;
 import com.android.systemui.media.MediaHierarchyManager;
 import com.android.systemui.media.MediaHost;
+import com.android.systemui.media.MediaHostState;
 import com.android.systemui.plugins.FalsingManager;
 import com.android.systemui.plugins.qs.DetailAdapter;
 import com.android.systemui.plugins.qs.QSTile;
@@ -64,6 +67,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
     private final CommandQueue mCommandQueue;
     private final BrightnessController mBrightnessController;
     private final BrightnessSliderController mBrightnessSliderController;
+    private final MediaFlags mMediaFlags;
     private final BrightnessMirrorHandler mBrightnessMirrorHandler;
     private BrightnessMirrorController mBrightnessMirrorController;
 
@@ -102,7 +106,8 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
             DumpManager dumpManager, MetricsLogger metricsLogger, UiEventLogger uiEventLogger,
             QSLogger qsLogger, BrightnessController.Factory brightnessControllerFactory,
             BrightnessSliderController.Factory brightnessSliderFactory,
-            FalsingManager falsingManager, CommandQueue commandQueue) {
+            FalsingManager falsingManager, CommandQueue commandQueue,
+            MediaFlags mediaFlags) {
         super(view, qstileHost, qsCustomizerController, usingMediaPlayer, mediaHost,
                 metricsLogger, uiEventLogger, qsLogger, dumpManager);
         mQsSecurityFooter = qsSecurityFooter;
@@ -114,6 +119,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         mQsSecurityFooter.setHostEnvironment(qstileHost);
 
         mBrightnessSliderController = brightnessSliderFactory.create(getContext(), mView);
+        mMediaFlags = mediaFlags;
         mView.setBrightnessView(mBrightnessSliderController.getRootView());
 
         mBrightnessController = brightnessControllerFactory.create(mBrightnessSliderController);
@@ -131,7 +137,14 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
     }
 
     private void updateMediaExpansion() {
-        mMediaHost.setExpansion(Utils.shouldUseSplitNotificationShade(getResources()) ? 0 : 1);
+        boolean inSplitShade = Utils.shouldUseSplitNotificationShade(getResources());
+        float expansion;
+        if (inSplitShade && !mMediaFlags.useMediaSessionLayout()) {
+            expansion = MediaHostState.COLLAPSED;
+        } else {
+            expansion = MediaHostState.EXPANDED;
+        }
+        mMediaHost.setExpansion(expansion);
     }
 
     @Override
