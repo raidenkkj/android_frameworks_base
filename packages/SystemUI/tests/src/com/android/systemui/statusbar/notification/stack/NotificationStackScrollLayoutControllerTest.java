@@ -277,18 +277,17 @@ public class NotificationStackScrollLayoutControllerTest extends SysuiTestCase {
                 mStateListenerArgumentCaptor.capture(), anyInt());
         StatusBarStateController.StateListener stateListener =
                 mStateListenerArgumentCaptor.getValue();
-        when(mNotificationStackScrollLayout.isUsingSplitNotificationShade()).thenReturn(true);
         stateListener.onStateChanged(SHADE);
         mController.getView().removeAllViews();
 
-        mController.setQsExpanded(false);
+        mController.setQsFullScreen(false);
         reset(mNotificationStackScrollLayout);
         mController.updateShowEmptyShadeView();
         verify(mNotificationStackScrollLayout).updateEmptyShadeView(
                 /* visible= */ true,
                 /* notifVisibleInShade= */ false);
 
-        mController.setQsExpanded(true);
+        mController.setQsFullScreen(true);
         reset(mNotificationStackScrollLayout);
         mController.updateShowEmptyShadeView();
         verify(mNotificationStackScrollLayout).updateEmptyShadeView(
@@ -426,11 +425,11 @@ public class NotificationStackScrollLayoutControllerTest extends SysuiTestCase {
             boolean toShow) {
         if (toShow) {
             statusBarStateListener.onStateChanged(SHADE);
-            mController.setQsExpanded(false);
+            mController.setQsFullScreen(false);
             mController.getView().removeAllViews();
         } else {
             statusBarStateListener.onStateChanged(KEYGUARD);
-            mController.setQsExpanded(true);
+            mController.setQsFullScreen(true);
             mController.getView().addContainerView(mock(ExpandableNotificationRow.class));
         }
     }

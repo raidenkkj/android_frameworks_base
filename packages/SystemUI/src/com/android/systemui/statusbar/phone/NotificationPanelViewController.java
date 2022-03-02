@@ -381,6 +381,12 @@ public class NotificationPanelViewController extends PanelViewController {
     private boolean mConflictingQsExpansionGesture;
 
     private boolean mPanelExpanded;
+
+    /**
+     * Indicates that QS is in expanded state which can happen by:
+     * - single pane shade: expanding shade and then expanding QS
+     * - split shade: just expanding shade (QS are expanded automatically)
+     */
     private boolean mQsExpanded;
     private boolean mQsExpandedWhenExpandingStarted;
     private boolean mQsFullyExpanded;
@@ -424,7 +430,11 @@ public class NotificationPanelViewController extends PanelViewController {
     private boolean mIsExpanding;
 
     private boolean mBlockTouches;
-    // Used for two finger gesture as well as accessibility shortcut to QS.
+
+    /**
+     * Determines if QS should be already expanded when expanding shade.
+     * Used for split shade, two finger gesture as well as accessibility shortcut to QS.
+     */
     private boolean mQsExpandImmediate;
     private boolean mTwoFingerQsExpandPossible;
     private String mHeaderDebugInfo;
@@ -1708,9 +1718,14 @@ public class NotificationPanelViewController extends PanelViewController {
 
         if (mQsExpanded) {
             mQsExpandImmediate = true;
-            mNotificationStackScrollLayoutController.setShouldShowShelfOnly(true);
+            setShowShelfOnly(true);
         }
         super.collapse(delayed, speedUpFactor);
+    }
+
+    private void setShowShelfOnly(boolean shelfOnly) {
+        mNotificationStackScrollLayoutController.setShouldShowShelfOnly(
+                shelfOnly && !mShouldUseSplitNotificationShade);
     }
 
     public void closeQs() {
@@ -1749,7 +1764,7 @@ public class NotificationPanelViewController extends PanelViewController {
     public void expandWithQs() {
         if (isQsExpansionEnabled()) {
             mQsExpandImmediate = true;
-            mNotificationStackScrollLayoutController.setShouldShowShelfOnly(true);
+            setShowShelfOnly(true);
         }
         if (isFullyCollapsed()) {
             expand(true /* animate */);
@@ -1958,7 +1973,15 @@ public class NotificationPanelViewController extends PanelViewController {
             mFalsingManager.isFalseTouch(QS_COLLAPSE);
         }
 
-        flingSettings(vel, expandsQs && !isCancelMotionEvent ? FLING_EXPAND : FLING_COLLAPSE);
+        int flingType;
+        if (expandsQs && !isCancelMotionEvent) {
+            flingType = FLING_EXPAND;
+        } else if (mShouldUseSplitNotificationShade) {
+            flingType = FLING_HIDE;
+        } else {
+            flingType = FLING_COLLAPSE;
+        }
+        flingSettings(vel, flingType);
     }
 
     private void logQsSwipeDown(float y) {
@@ -2023,8 +2046,10 @@ public class NotificationPanelViewController extends PanelViewController {
             return false;
         }
         final int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_DOWN && getExpandedFraction() == 1f
-                && mBarState != KEYGUARD && !mQsExpanded && isQsExpansionEnabled()) {
+        boolean collapsedQs = !mQsExpanded && !mShouldUseSplitNotificationShade;
+        boolean expandedShadeCollapsedQs = getExpandedFraction() == 1f && mBarState != KEYGUARD
+                && collapsedQs && isQsExpansionEnabled();
+        if (action == MotionEvent.ACTION_DOWN && expandedShadeCollapsedQs) {
             // Down in the empty area while fully expanded - go to QS.
             mQsTracking = true;
             traceQsJank(true /* startTracing */, false /* wasCancelled */);
@@ -2039,7 +2064,7 @@ public class NotificationPanelViewController extends PanelViewController {
         }
         if (!mQsExpandImmediate && mQsTracking) {
             onQsTouch(event);
-            if (!mConflictingQsExpansionGesture) {
+            if (!mConflictingQsExpansionGesture && !mShouldUseSplitNotificationShade) {
                 return true;
             }
         }
@@ -2054,7 +2079,7 @@ public class NotificationPanelViewController extends PanelViewController {
                 < mStatusBarMinHeight) {
             mMetricsLogger.count(COUNTER_PANEL_OPEN_QS, 1);
             mQsExpandImmediate = true;
-            mNotificationStackScrollLayoutController.setShouldShowShelfOnly(true);
+            setShowShelfOnly(true);
             requestPanelHeightUpdate();
 
             // Normally, we start listening when the panel is expanded, but here we need to start
@@ -2150,6 +2175,9 @@ public class NotificationPanelViewController extends PanelViewController {
     public void startWaitingForOpenPanelGesture() {
         if (!isFullyCollapsed()) {
             return;
+        }
+        if (mShouldUseSplitNotificationShade) {
+            mQsExpandImmediate = true;
         }
         mExpectingSynthesizedDown = true;
         onTrackingStarted();
@@ -2357,12 +2385,10 @@ public class NotificationPanelViewController extends PanelViewController {
     }
 
     private void updateQsState() {
-        mNotificationStackScrollLayoutController.setQsExpanded(mQsExpanded);
+        boolean qsFullScreen = mQsExpanded && !mShouldUseSplitNotificationShade;
+        mNotificationStackScrollLayoutController.setQsFullScreen(qsFullScreen);
         mNotificationStackScrollLayoutController.setScrollingEnabled(
-                mBarState != KEYGUARD
-                        && (!mQsExpanded
-                            || mQsExpansionFromOverscroll
-                            || mShouldUseSplitNotificationShade));
+                mBarState != KEYGUARD && (!qsFullScreen || mQsExpansionFromOverscroll));
 
         if (mKeyguardUserSwitcherController != null && mQsExpanded
                 && !mStackScrollerOverscrolling) {
@@ -2408,7 +2434,7 @@ public class NotificationPanelViewController extends PanelViewController {
     private void updateQsExpansion() {
         if (mQs == null) return;
         final float squishiness;
-        if (mQsExpandImmediate || mQsExpanded) {
+        if ((mQsExpandImmediate || mQsExpanded) && !mShouldUseSplitNotificationShade) {
             squishiness = 1;
         } else if (mLockscreenShadeTransitionController.getQSDragProgress() > 0) {
             squishiness = mLockscreenShadeTransitionController.getQSDragProgress();
@@ -3259,7 +3285,7 @@ public class NotificationPanelViewController extends PanelViewController {
             setListening(true);
         }
         mQsExpandImmediate = false;
-        mNotificationStackScrollLayoutController.setShouldShowShelfOnly(false);
+        setShowShelfOnly(false);
         mTwoFingerQsExpandPossible = false;
         updateTrackingHeadsUp(null);
         mExpandingFromHeadsUp = false;
@@ -3315,9 +3341,7 @@ public class NotificationPanelViewController extends PanelViewController {
         mScrimController.onTrackingStarted();
         if (mQsFullyExpanded) {
             mQsExpandImmediate = true;
-            if (!mShouldUseSplitNotificationShade) {
-                mNotificationStackScrollLayoutController.setShouldShowShelfOnly(true);
-            }
+            setShowShelfOnly(true);
         }
         if (mBarState == KEYGUARD || mBarState == StatusBarState.SHADE_LOCKED) {
             mAffordanceHelper.animateHideLeftRightIcon();
@@ -3959,10 +3983,6 @@ public class NotificationPanelViewController extends PanelViewController {
 
     public void runAfterAnimationFinished(Runnable r) {
         mNotificationStackScrollLayoutController.runAfterAnimationFinished(r);
-    }
-
-    public void setScrollingEnabled(boolean b) {
-        mNotificationStackScrollLayoutController.setScrollingEnabled(b);
     }
 
     private Runnable mHideExpandedRunnable;
@@ -4921,7 +4941,11 @@ public class NotificationPanelViewController extends PanelViewController {
 
     private void updateQSMinHeight() {
         float previousMin = mQsMinExpansionHeight;
-        mQsMinExpansionHeight = mKeyguardShowing ? 0 : mQs.getQsMinExpansionHeight();
+        if (mKeyguardShowing || mShouldUseSplitNotificationShade) {
+            mQsMinExpansionHeight = 0;
+        } else {
+            mQsMinExpansionHeight = mQs.getQsMinExpansionHeight();
+        }
         if (mQsExpansionHeight == previousMin) {
             mQsExpansionHeight = mQsMinExpansionHeight;
         }

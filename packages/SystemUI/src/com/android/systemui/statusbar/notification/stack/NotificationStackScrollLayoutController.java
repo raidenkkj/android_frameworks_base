@@ -1065,8 +1065,8 @@ public class NotificationStackScrollLayoutController {
         }
     }
 
-    public void setQsExpanded(boolean expanded) {
-        mView.setQsExpanded(expanded);
+    public void setQsFullScreen(boolean fullScreen) {
+        mView.setQsFullScreen(fullScreen);
         updateShowEmptyShadeView();
     }
 
@@ -1182,7 +1182,7 @@ public class NotificationStackScrollLayoutController {
      */
     public void updateShowEmptyShadeView() {
         mShowEmptyShadeView = mBarState != KEYGUARD
-                && (!mView.isQsExpanded() || mView.isUsingSplitNotificationShade())
+                && !mView.isQsFullScreen()
                 && mView.getVisibleNotificationCount() == 0;
 
         mView.updateEmptyShadeView(
