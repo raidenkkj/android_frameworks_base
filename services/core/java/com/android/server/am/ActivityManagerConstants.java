@@ -626,6 +626,38 @@ final class ActivityManagerConstants extends ContentObserver {
     // initialized in the constructor.
     public int CUR_MAX_EMPTY_PROCESSES;
 
+
+    /** @see #mNoKillCachedProcessesUntilBootCompleted */
+    private static final String KEY_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED =
+            "no_kill_cached_processes_until_boot_completed";
+
+    /** @see #mNoKillCachedProcessesPostBootCompletedDurationMillis */
+    private static final String KEY_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS =
+            "no_kill_cached_processes_post_boot_completed_duration_millis";
+
+    /** @see #mNoKillCachedProcessesUntilBootCompleted */
+    private static final boolean DEFAULT_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED = false;
+
+    /** @see #mNoKillCachedProcessesPostBootCompletedDurationMillis */
+    private static final long
+            DEFAULT_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS = 0;
+
+    /**
+     * If true, do not kill excessive cached processes proactively, until user-0 is unlocked.
+     * @see #mNoKillCachedProcessesPostBootCompletedDurationMillis
+     */
+    volatile boolean mNoKillCachedProcessesUntilBootCompleted =
+            DEFAULT_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED;
+
+    /**
+     * Do not kill excessive cached processes proactively, for this duration after each user is
+     * unlocked.
+     * Note we don't proactively kill extra cached processes after this. The next oomadjuster pass
+     * will naturally do it.
+     */
+    volatile long mNoKillCachedProcessesPostBootCompletedDurationMillis =
+            DEFAULT_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS;
+
     // The number of empty apps at which we don't consider it necessary to do
     // memory trimming.
     public int CUR_TRIM_EMPTY_PROCESSES = computeEmptyProcessLimit(MAX_CACHED_PROCESSES) / 2;
@@ -634,6 +666,14 @@ final class ActivityManagerConstants extends ContentObserver {
     // memory trimming.
     public int CUR_TRIM_CACHED_PROCESSES =
             (MAX_CACHED_PROCESSES - computeEmptyProcessLimit(MAX_CACHED_PROCESSES)) / 3;
+
+    /** @see #mNoKillCachedProcessesUntilBootCompleted */
+    private static final String KEY_MAX_EMPTY_TIME_MILLIS =
+            "max_empty_time_millis";
+
+    private static final long DEFAULT_MAX_EMPTY_TIME_MILLIS = 30 * 60 * 1000;
+
+    volatile long mMaxEmptyTimeMillis = DEFAULT_MAX_EMPTY_TIME_MILLIS;
 
     /**
      * Packages that can't be killed even if it's requested to be killed on imperceptible.
@@ -834,6 +874,15 @@ final class ActivityManagerConstants extends ContentObserver {
                                 break;
                             case KEY_PROCESS_KILL_TIMEOUT:
                                 updateProcessKillTimeout();
+                                break;
+                            case KEY_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED:
+                                updateNoKillCachedProcessesUntilBootCompleted();
+                                break;
+                            case KEY_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS:
+                                updateNoKillCachedProcessesPostBootCompletedDurationMillis();
+                                break;
+                            case KEY_MAX_EMPTY_TIME_MILLIS:
+                                updateMaxEmptyTimeMillis();
                                 break;
                             default:
                                 break;
@@ -1279,6 +1328,27 @@ final class ActivityManagerConstants extends ContentObserver {
                 KEY_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS,
                 DEFAULT_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS);
     }
+    
+    private void updateNoKillCachedProcessesUntilBootCompleted() {
+        mNoKillCachedProcessesUntilBootCompleted = DeviceConfig.getBoolean(
+                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
+                KEY_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED,
+                DEFAULT_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED);
+    }
+
+    private void updateNoKillCachedProcessesPostBootCompletedDurationMillis() {
+        mNoKillCachedProcessesPostBootCompletedDurationMillis = DeviceConfig.getLong(
+                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
+                KEY_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS,
+                DEFAULT_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS);
+    }
+
+    private void updateMaxEmptyTimeMillis() {
+        mMaxEmptyTimeMillis = DeviceConfig.getLong(
+                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
+                KEY_MAX_EMPTY_TIME_MILLIS,
+                DEFAULT_MAX_EMPTY_TIME_MILLIS);
+    }
 
     private long[] parseLongArray(@NonNull String key, @NonNull long[] def) {
         final String val = DeviceConfig.getString(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
@@ -1540,6 +1610,12 @@ final class ActivityManagerConstants extends ContentObserver {
         pw.print("="); pw.println(mFgsAllowOptOut);
         pw.print("  "); pw.print(KEY_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS);
         pw.print("="); pw.println(mServiceBindAlmostPerceptibleTimeoutMs);
+        pw.print("  "); pw.print(KEY_NO_KILL_CACHED_PROCESSES_UNTIL_BOOT_COMPLETED);
+        pw.print("="); pw.println(mNoKillCachedProcessesUntilBootCompleted);
+        pw.print("  "); pw.print(KEY_NO_KILL_CACHED_PROCESSES_POST_BOOT_COMPLETED_DURATION_MILLIS);
+        pw.print("="); pw.println(mNoKillCachedProcessesPostBootCompletedDurationMillis);
+        pw.print("  "); pw.print(KEY_MAX_EMPTY_TIME_MILLIS);
+        pw.print("="); pw.println(mMaxEmptyTimeMillis);
 
         pw.println();
         if (mOverrideMaxCachedProcesses >= 0) {
