@@ -2352,7 +2352,8 @@ public final class ActivityRecord extends WindowToken implements WindowManagerSe
         // either way, abort and reset the sequence.
         if (parcelable == null
                 || mTransferringSplashScreenState != TRANSFER_SPLASH_SCREEN_COPYING
-                || mStartingWindow == null) {
+                || mStartingWindow == null
+                || finishing) {
             if (parcelable != null) {
                 parcelable.clearIfNeeded();
             }
