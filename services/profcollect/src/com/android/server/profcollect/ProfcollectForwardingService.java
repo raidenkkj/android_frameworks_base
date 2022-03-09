@@ -213,8 +213,11 @@ public final class ProfcollectForwardingService extends SystemService {
 
     // Event observers
     private void registerObservers() {
-        registerAppLaunchObserver();
-        registerOTAObserver();
+        BackgroundThread.get().getThreadHandler().post(
+                () -> {
+                    registerAppLaunchObserver();
+                    registerOTAObserver();
+                });
     }
 
     private final AppLaunchObserver mAppLaunchObserver = new AppLaunchObserver();
