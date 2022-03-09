@@ -105,6 +105,8 @@ final class ActivityManagerConstants extends ContentObserver {
     static final String KEY_PROCESS_START_ASYNC = "process_start_async";
     static final String KEY_MEMORY_INFO_THROTTLE_TIME = "memory_info_throttle_time";
     static final String KEY_TOP_TO_FGS_GRACE_DURATION = "top_to_fgs_grace_duration";
+    static final String KEY_TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION =
+            "top_to_almost_perceptible_grace_duration";
     static final String KEY_PENDINGINTENT_WARNING_THRESHOLD = "pendingintent_warning_threshold";
     static final String KEY_MIN_CRASH_INTERVAL = "min_crash_interval";
     static final String KEY_PROCESS_CRASH_COUNT_RESET_INTERVAL =
@@ -156,6 +158,7 @@ final class ActivityManagerConstants extends ContentObserver {
     private static final boolean DEFAULT_PROCESS_START_ASYNC = true;
     private static final long DEFAULT_MEMORY_INFO_THROTTLE_TIME = 5*60*1000;
     private static final long DEFAULT_TOP_TO_FGS_GRACE_DURATION = 15 * 1000;
+    private static final long DEFAULT_TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION = 15 * 1000;
     private static final int DEFAULT_PENDINGINTENT_WARNING_THRESHOLD = 2000;
     private static final int DEFAULT_MIN_CRASH_INTERVAL = 2 * 60 * 1000;
     private static final int DEFAULT_PROCESS_CRASH_COUNT_RESET_INTERVAL = 12 * 60 * 60 * 1000;
@@ -191,6 +194,8 @@ final class ActivityManagerConstants extends ContentObserver {
      * Whether or not to enable the extra delays to service restarts on memory pressure.
      */
     private static final boolean DEFAULT_ENABLE_EXTRA_SERVICE_RESTART_DELAY_ON_MEM_PRESSURE = true;
+
+    private static final long DEFAULT_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS = 15 * 1000;
 
     // Flag stored in the DeviceConfig API.
     /**
@@ -275,6 +280,9 @@ final class ActivityManagerConstants extends ContentObserver {
      */
     private static final String KEY_PUSH_MESSAGING_OVER_QUOTA_BEHAVIOR =
             "push_messaging_over_quota_behavior";
+
+    private static final String KEY_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS =
+            "service_bind_almost_perceptible_timeout_ms";
 
     // Maximum number of cached processes we will allow.
     public int MAX_CACHED_PROCESSES = DEFAULT_MAX_CACHED_PROCESSES;
@@ -419,6 +427,13 @@ final class ActivityManagerConstants extends ContentObserver {
     public long TOP_TO_FGS_GRACE_DURATION = DEFAULT_TOP_TO_FGS_GRACE_DURATION;
 
     /**
+     * Allow app just leaving TOP with an already running ALMOST_PERCEPTIBLE service to stay in
+     * a higher adj value for this long.
+     */
+    public long TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION =
+            DEFAULT_TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION;
+
+    /**
      * The minimum time we allow between crashes, for us to consider this
      * application to be bad and stop its services and reject broadcasts.
      * A reasonable interval here would be anything between 1-3 minutes.
@@ -561,6 +576,13 @@ final class ActivityManagerConstants extends ContentObserver {
     @GuardedBy("mService")
     boolean mEnableExtraServiceRestartDelayOnMemPressure =
             DEFAULT_ENABLE_EXTRA_SERVICE_RESTART_DELAY_ON_MEM_PRESSURE;
+
+    /**
+     * How long the grace period is from starting an almost perceptible service to a successful
+     * binding before we stop considering it an almost perceptible service.
+     */
+    volatile long mServiceBindAlmostPerceptibleTimeoutMs =
+            DEFAULT_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS;
 
     private final ActivityManagerService mService;
     private ContentResolver mResolver;
@@ -794,6 +816,9 @@ final class ActivityManagerConstants extends ContentObserver {
                                 break;
                             case KEY_ENABLE_EXTRA_SERVICE_RESTART_DELAY_ON_MEM_PRESSURE:
                                 updateEnableExtraServiceRestartDelayOnMemPressure();
+                                break;
+                            case KEY_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS:
+                                updateServiceBindAlmostPerceptibleTimeoutMs();
                                 break;
                             default:
                                 break;
@@ -1032,6 +1057,9 @@ final class ActivityManagerConstants extends ContentObserver {
                     DEFAULT_MEMORY_INFO_THROTTLE_TIME);
             TOP_TO_FGS_GRACE_DURATION = mParser.getDurationMillis(KEY_TOP_TO_FGS_GRACE_DURATION,
                     DEFAULT_TOP_TO_FGS_GRACE_DURATION);
+            TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION = mParser.getDurationMillis(
+                    KEY_TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION,
+                    DEFAULT_TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION);
             MIN_CRASH_INTERVAL = mParser.getInt(KEY_MIN_CRASH_INTERVAL,
                     DEFAULT_MIN_CRASH_INTERVAL);
             PENDINGINTENT_WARNING_THRESHOLD = mParser.getInt(KEY_PENDINGINTENT_WARNING_THRESHOLD,
@@ -1230,6 +1258,13 @@ final class ActivityManagerConstants extends ContentObserver {
         }
     }
 
+    private void updateServiceBindAlmostPerceptibleTimeoutMs() {
+        mServiceBindAlmostPerceptibleTimeoutMs = DeviceConfig.getLong(
+                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
+                KEY_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS,
+                DEFAULT_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS);
+    }
+
     private long[] parseLongArray(@NonNull String key, @NonNull long[] def) {
         final String val = DeviceConfig.getString(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
                 key, null);
@@ -1426,6 +1461,8 @@ final class ActivityManagerConstants extends ContentObserver {
         pw.println(MEMORY_INFO_THROTTLE_TIME);
         pw.print("  "); pw.print(KEY_TOP_TO_FGS_GRACE_DURATION); pw.print("=");
         pw.println(TOP_TO_FGS_GRACE_DURATION);
+        pw.print("  "); pw.print(KEY_TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION); pw.print("=");
+        pw.println(TOP_TO_ALMOST_PERCEPTIBLE_GRACE_DURATION);
         pw.print("  "); pw.print(KEY_MIN_CRASH_INTERVAL); pw.print("=");
         pw.println(MIN_CRASH_INTERVAL);
         pw.print("  "); pw.print(KEY_PROCESS_CRASH_COUNT_RESET_INTERVAL); pw.print("=");
@@ -1479,6 +1516,8 @@ final class ActivityManagerConstants extends ContentObserver {
         pw.print("="); pw.println(mPushMessagingOverQuotaBehavior);
         pw.print("  "); pw.print(KEY_FGS_ALLOW_OPT_OUT);
         pw.print("="); pw.println(mFgsAllowOptOut);
+        pw.print("  "); pw.print(KEY_SERVICE_BIND_ALMOST_PERCEPTIBLE_TIMEOUT_MS);
+        pw.print("="); pw.println(mServiceBindAlmostPerceptibleTimeoutMs);
 
         pw.println();
         if (mOverrideMaxCachedProcesses >= 0) {
