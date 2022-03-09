@@ -1287,6 +1287,10 @@ class WindowOrganizerController extends IWindowOrganizerController.Stub
         return mLaunchTaskFragments.get(tfToken);
     }
 
+    void cleanUpEmbeddedTaskFragment(TaskFragment taskFragment) {
+        mLaunchTaskFragments.remove(taskFragment.getFragmentToken());
+    }
+
     static class CallerInfo {
         final int mPid;
         final int mUid;
