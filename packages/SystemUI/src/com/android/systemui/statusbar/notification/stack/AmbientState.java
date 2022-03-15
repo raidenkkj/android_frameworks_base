@@ -80,7 +80,6 @@ public class AmbientState {
     private Runnable mOnPulseHeightChangedListener;
     private ExpandableNotificationRow mTrackedHeadsUpRow;
     private float mAppearFraction;
-    private boolean mIsShadeOpening;
     private float mOverExpansion;
     private int mStackTopMargin;
 
@@ -172,14 +171,6 @@ public class AmbientState {
     public void reload(Context context) {
         mZDistanceBetweenElements = getZDistanceBetweenElements(context);
         mBaseZHeight = getBaseHeight(mZDistanceBetweenElements);
-    }
-
-    public void setIsShadeOpening(boolean isOpening) {
-        mIsShadeOpening = isOpening;
-    }
-
-    public boolean isShadeOpening() {
-        return mIsShadeOpening;
     }
 
     void setOverExpansion(float overExpansion) {

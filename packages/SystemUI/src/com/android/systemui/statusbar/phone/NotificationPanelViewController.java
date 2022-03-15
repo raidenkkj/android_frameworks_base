@@ -4993,7 +4993,6 @@ public class NotificationPanelViewController extends PanelViewController {
     private int mCurrentPanelState = STATE_CLOSED;
 
     private void onPanelStateChanged(@PanelState int state) {
-        mAmbientState.setIsShadeOpening(state == STATE_OPENING);
         updateQSExpansionEnabledAmbient();
 
         if (state == STATE_OPEN && mCurrentPanelState != state) {
