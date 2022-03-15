@@ -2646,6 +2646,8 @@ public class SubscriptionManager {
                 overrideConfig.mnc = Configuration.MNC_ZERO;
                 cacheKey = null;
             }
+        } else {
+            cacheKey = null;
         }
 
         if (useRootLocale) {
