@@ -176,5 +176,9 @@
         <permission name="android.permission.READ_PEOPLE_DATA" />
         <permission name="lineageos.permission.WRITE_SETTINGS" />
 	<permission name="android.permission.MODIFY_AUDIO_SETTINGS" />
+        <permission name="android.permission.ACCESS_FPS_COUNTER" />
+        <permission name="android.permission.CHANGE_CONFIGURATION" />
+        <permission name="android.permission.LOG_COMPAT_CHANGE" />
+        <permission name="android.permission.READ_COMPAT_CHANGE_CONFIG" />
     </privapp-permissions>
 </permissions>
