@@ -1479,6 +1479,7 @@ public class ActivityManagerService extends IActivityManager.Stub
     static final int IDLE_UIDS_MSG = 58;
     static final int HANDLE_TRUST_STORAGE_UPDATE_MSG = 63;
     static final int SERVICE_FOREGROUND_TIMEOUT_MSG = 66;
+    static final int SERVICE_FOREGROUND_TIMEOUT_ANR_MSG = 67;
     static final int PUSH_TEMP_ALLOWLIST_UI_MSG = 68;
     static final int SERVICE_FOREGROUND_CRASH_MSG = 69;
     static final int DISPATCH_OOM_ADJ_OBSERVER_MSG = 70;
@@ -1669,6 +1670,12 @@ public class ActivityManagerService extends IActivityManager.Stub
             } break;
             case SERVICE_FOREGROUND_TIMEOUT_MSG: {
                 mServices.serviceForegroundTimeout((ServiceRecord) msg.obj);
+            } break;
+            case SERVICE_FOREGROUND_TIMEOUT_ANR_MSG: {
+                SomeArgs args = (SomeArgs) msg.obj;
+                mServices.serviceForegroundTimeoutANR((ProcessRecord) args.arg1,
+                        (String) args.arg2);
+                args.recycle();
             } break;
             case SERVICE_FOREGROUND_CRASH_MSG: {
                 SomeArgs args = (SomeArgs) msg.obj;
@@ -16563,6 +16570,11 @@ public class ActivityManagerService extends IActivityManager.Stub
             synchronized (ActivityManagerService.this) {
                 return mConstants.mPushMessagingOverQuotaBehavior;
             }
+        }
+
+        @Override
+        public int getServiceStartForegroundTimeout() {
+            return mConstants.mServiceStartForegroundTimeoutMs;
         }
 
         @Override
