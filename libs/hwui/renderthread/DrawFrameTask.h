@@ -89,6 +89,8 @@ public:
         mFrameCompleteCallback = std::move(callback);
     }
 
+    void forceDrawNextFrame() { mForceDrawFrame = true; }
+
 private:
     class HintSessionWrapper {
     public:
@@ -133,6 +135,8 @@ private:
     nsecs_t mLastDequeueBufferDuration = 0;
     nsecs_t mLastTargetWorkDuration = 0;
     std::optional<HintSessionWrapper> mHintSessionWrapper;
+
+    bool mForceDrawFrame = false;
 };
 
 } /* namespace renderthread */

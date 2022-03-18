@@ -851,6 +851,14 @@ public class HardwareRenderer {
         nSetContentDrawBounds(mNativeProxy, left, top, right, bottom);
     }
 
+    /**
+     * Force the new frame to draw, ensuring the UI draw request will attempt a draw this vsync.
+     * @hide
+     */
+    public void forceDrawNextFrame() {
+        nForceDrawNextFrame(mNativeProxy);
+    }
+
     /** @hide */
     public void setPictureCaptureCallback(@Nullable PictureCapturedCallback callback) {
         nSetPictureCaptureCallback(mNativeProxy, callback);
@@ -1418,6 +1426,8 @@ public class HardwareRenderer {
 
     private static native void nSetContentDrawBounds(long nativeProxy, int left,
             int top, int right, int bottom);
+
+    private static native void nForceDrawNextFrame(long nativeProxy);
 
     private static native void nSetPictureCaptureCallback(long nativeProxy,
             PictureCapturedCallback callback);
