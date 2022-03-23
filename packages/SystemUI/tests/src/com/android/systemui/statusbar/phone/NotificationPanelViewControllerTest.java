@@ -861,6 +861,14 @@ public class NotificationPanelViewControllerTest extends SysuiTestCase {
         verify(mKeyguardStatusViewController, never()).displayClock(LARGE);
     }
 
+    @Test
+    public void testUnlockAnimationDoesNotAffectScrim() {
+        mNotificationPanelViewController.onUnlockHintStarted();
+        verify(mScrimController).setExpansionAffectsAlpha(false);
+        mNotificationPanelViewController.onUnlockHintFinished();
+        verify(mScrimController).setExpansionAffectsAlpha(true);
+    }
+
     private void triggerPositionClockAndNotifications() {
         mNotificationPanelViewController.closeQs();
     }
