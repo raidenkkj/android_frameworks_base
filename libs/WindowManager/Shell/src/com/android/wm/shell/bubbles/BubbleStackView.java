@@ -1128,6 +1128,7 @@ public class BubbleStackView extends FrameLayout
         // The menu itself should respect locale direction so the icons are on the correct side.
         mManageMenu.setLayoutDirection(LAYOUT_DIRECTION_LOCALE);
         addView(mManageMenu);
+        updateManageButtonListener();
     }
 
     /**
@@ -1300,7 +1301,6 @@ public class BubbleStackView extends FrameLayout
     /** Respond to the display size change by recalculating view size and location. */
     public void onDisplaySizeChanged() {
         updateOverflow();
-        setUpManageMenu();
         setUpFlyout();
         setUpDismissView();
         updateUserEdu();
@@ -1327,6 +1327,7 @@ public class BubbleStackView extends FrameLayout
         if (mIsExpanded) {
             updateExpandedView();
         }
+        setUpManageMenu();
     }
 
     @Override
@@ -2702,7 +2703,7 @@ public class BubbleStackView extends FrameLayout
                 // a race condition with adding the BubbleExpandedView view to the expanded view
                 // container. Due to the race condition the click handler sometimes is not set up
                 // correctly and is never called.
-                bev.setManageClickListener((view) -> showManageMenu(true /* show */));
+                updateManageButtonListener();
             }, 0);
 
             if (!mIsExpansionAnimating) {
@@ -2711,6 +2712,16 @@ public class BubbleStackView extends FrameLayout
                     post(this::animateSwitchBubbles);
                 });
             }
+        }
+    }
+
+    private void updateManageButtonListener() {
+        if (mIsExpanded && mExpandedBubble != null
+                && mExpandedBubble.getExpandedView() != null) {
+            BubbleExpandedView bev = mExpandedBubble.getExpandedView();
+            bev.setManageClickListener((view) -> {
+                showManageMenu(true /* show */);
+            });
         }
     }
 
