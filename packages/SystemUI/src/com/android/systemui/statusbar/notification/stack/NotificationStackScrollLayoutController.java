@@ -1222,8 +1222,9 @@ public class NotificationStackScrollLayoutController {
         mView.setExpandedHeight(expandedHeight);
     }
 
-    public void setQsContainer(ViewGroup view) {
-        mView.setQsContainer(view);
+    /** Sets the QS header. Used to check if a touch is within its bounds. */
+    public void setQsHeader(ViewGroup view) {
+        mView.setQsHeader(view);
     }
 
     public void setAnimationsEnabled(boolean enabled) {

@@ -3697,7 +3697,7 @@ public class NotificationPanelViewController extends PanelViewController {
                 }
             });
             mLockscreenShadeTransitionController.setQS(mQs);
-            mNotificationStackScrollLayoutController.setQsContainer((ViewGroup) mQs.getView());
+            mNotificationStackScrollLayoutController.setQsHeader((ViewGroup) mQs.getHeader());
             mQs.setScrollListener(mScrollListener);
             updateQsExpansion();
         }
