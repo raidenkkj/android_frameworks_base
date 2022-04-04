@@ -294,7 +294,9 @@ class SaveImageInBackgroundTask extends AsyncTask<String, Void, Void> {
                     new ClipData.Item(uri));
             sharingIntent.setClipData(clipdata);
             sharingIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
-            sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
 
             // Make sure pending intents for the system user are still unique across users
             // by setting the (otherwise unused) request code to the current user id.
@@ -303,6 +305,7 @@ class SaveImageInBackgroundTask extends AsyncTask<String, Void, Void> {
             Intent sharingChooserIntent = Intent.createChooser(sharingIntent, null)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK)
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
 
             // cancel current pending intent (if any) since clipData isn't used for matching
             PendingIntent pendingIntent = PendingIntent.getActivityAsUser(
