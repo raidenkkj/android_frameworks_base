@@ -2996,6 +2996,7 @@ class WindowContainer<E extends WindowContainer> extends ConfigurationContainer<
     public void onAnimationLeashLost(Transaction t) {
         mLastLayer = -1;
         mAnimationLeash = null;
+        mNeedsZBoost = false;
         reassignLayer(t);
         updateSurfacePosition(t);
     }
