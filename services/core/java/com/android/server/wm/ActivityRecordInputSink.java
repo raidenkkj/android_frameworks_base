@@ -170,4 +170,11 @@ class ActivityRecordInputSink {
         }
     }
 
+    void releaseSurfaceControl() {
+        if (mSurfaceControl != null) {
+            mSurfaceControl.release();
+            mSurfaceControl = null;
+        }
+    }
+
 }
