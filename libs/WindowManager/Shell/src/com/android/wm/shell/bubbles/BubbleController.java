@@ -1110,12 +1110,6 @@ public class BubbleController {
                 mOverflowListener.applyUpdate(update);
             }
 
-            // Collapsing? Do this first before remaining steps.
-            if (update.expandedChanged && !update.expanded) {
-                mStackView.setExpanded(false);
-                mSysuiProxy.requestNotificationShadeTopUi(false, TAG);
-            }
-
             // Do removals, if any.
             ArrayList<Pair<Bubble, Integer>> removedBubbles =
                     new ArrayList<>(update.removedBubbles);
@@ -1182,6 +1176,11 @@ public class BubbleController {
             if (update.orderChanged && mStackView != null) {
                 mDataRepository.addBubbles(mCurrentUserId, update.bubbles);
                 mStackView.updateBubbleOrder(update.bubbles);
+            }
+
+            if (update.expandedChanged && !update.expanded) {
+                mStackView.setExpanded(false);
+                mSysuiProxy.requestNotificationShadeTopUi(false, TAG);
             }
 
             if (update.selectionChanged && mStackView != null) {
