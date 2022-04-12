@@ -556,23 +556,26 @@ public class WallpaperManager {
                 }
                 mCachedWallpaper = null;
                 mCachedWallpaperUserId = 0;
-                try {
-                    mCachedWallpaper = getCurrentWallpaperLocked(
-                            context, userId, hardware, cmProxy);
-                    mCachedWallpaperUserId = userId;
-                } catch (OutOfMemoryError e) {
-                    Log.w(TAG, "Out of memory loading the current wallpaper: " + e);
-                } catch (SecurityException e) {
-                    if (context.getApplicationInfo().targetSdkVersion < Build.VERSION_CODES.O_MR1) {
-                        Log.w(TAG, "No permission to access wallpaper, suppressing"
-                                + " exception to avoid crashing legacy app.");
-                    } else {
-                        // Post-O apps really most sincerely need the permission.
-                        throw e;
+            }
+            try {
+                Bitmap currentWallpaper = getCurrentWallpaperLocked(
+                        context, userId, hardware, cmProxy);
+                if (currentWallpaper != null) {
+                    synchronized (this) {
+                        mCachedWallpaper = currentWallpaper;
+                        mCachedWallpaperUserId = userId;
+                        return mCachedWallpaper;
                     }
                 }
-                if (mCachedWallpaper != null) {
-                    return mCachedWallpaper;
+            } catch (OutOfMemoryError e) {
+                Log.w(TAG, "Out of memory loading the current wallpaper: " + e);
+            } catch (SecurityException e) {
+                if (context.getApplicationInfo().targetSdkVersion < Build.VERSION_CODES.O_MR1) {
+                    Log.w(TAG, "No permission to access wallpaper, suppressing"
+                            + " exception to avoid crashing legacy app.");
+                } else {
+                    // Post-O apps really most sincerely need the permission.
+                    throw e;
                 }
             }
             if (returnDefault) {
@@ -2430,6 +2433,7 @@ public class WallpaperManager {
          *
          * @param colors Wallpaper color info
          * @param which A combination of {@link #FLAG_LOCK} and {@link #FLAG_SYSTEM}
+         * @see android.service.wallpaper.WallpaperService.Engine#onComputeColors()
          */
         void onColorsChanged(WallpaperColors colors, int which);
 
@@ -2441,6 +2445,7 @@ public class WallpaperManager {
          * @param colors Wallpaper color info
          * @param which A combination of {@link #FLAG_LOCK} and {@link #FLAG_SYSTEM}
          * @param userId Owner of the wallpaper
+         * @see android.service.wallpaper.WallpaperService.Engine#onComputeColors()
          * @hide
          */
         default void onColorsChanged(WallpaperColors colors, int which, int userId) {
