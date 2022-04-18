@@ -2098,7 +2098,8 @@ class TaskFragment extends WindowContainer<WindowContainer> {
         if (applicationType != ACTIVITY_TYPE_UNDEFINED || !hasChild()) {
             return applicationType;
         }
-        return getTopChild().getActivityType();
+        final ActivityRecord activity = getTopNonFinishingActivity();
+        return activity != null ? activity.getActivityType() : getTopChild().getActivityType();
     }
 
     @Override
