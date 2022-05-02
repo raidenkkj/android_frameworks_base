@@ -26,6 +26,7 @@ import static android.view.SurfaceControl.METADATA_WINDOW_TYPE;
 import static android.view.View.SYSTEM_UI_FLAG_VISIBLE;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
+import android.animation.AnimationHandler;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -1463,6 +1464,8 @@ public abstract class WallpaperService extends Service {
                 mVisible = visible;
                 reportVisibility();
                 if (mReportedVisible) processLocalColors(mPendingXOffset, mPendingXOffsetStep);
+            } else {
+                AnimationHandler.requestAnimatorsEnabled(visible, this);
             }
         }
 
@@ -1491,6 +1494,7 @@ public abstract class WallpaperService extends Service {
                         if (DEBUG) Log.v(TAG, "Freezing wallpaper after visibility update");
                         freeze();
                     }
+                    AnimationHandler.requestAnimatorsEnabled(visible, this);
                 }
             }
         }
@@ -2033,6 +2037,8 @@ public abstract class WallpaperService extends Service {
             if (mDestroyed) {
                 return;
             }
+
+            AnimationHandler.removeRequestor(this);
 
             mDestroyed = true;
 

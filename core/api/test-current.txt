@@ -88,6 +88,11 @@ package android.accessibilityservice {
 
 package android.animation {
 
+  public abstract class Animator implements java.lang.Cloneable {
+    method public static long getBackgroundPauseDelay();
+    method public static void setBackgroundPauseDelay(long);
+  }
+
   public class ValueAnimator extends android.animation.Animator {
     method public static float getDurationScale();
     method public static void setDurationScale(float);
