@@ -1676,7 +1676,6 @@ public class OomAdjuster {
         state.setAdjTarget(null);
         state.setEmpty(false);
         state.setCached(false);
-        state.resetAllowStartFgsState();
         if (!cycleReEval) {
             // Don't reset this flag when doing cycles re-evaluation.
             // If this UID is currently allowlisted, it should not be frozen.
@@ -1736,7 +1735,6 @@ public class OomAdjuster {
             state.setCurRawProcState(state.getCurProcState());
             state.setCurAdj(state.getMaxAdj());
             state.setCompletedAdjSeq(state.getAdjSeq());
-            state.bumpAllowStartFgsState(state.getCurProcState());
             // if curAdj is less than prevAppAdj, then this process was promoted
             return state.getCurAdj() < prevAppAdj || state.getCurProcState() < prevProcState;
         }
@@ -1763,8 +1761,6 @@ public class OomAdjuster {
             foregroundActivities = true;
             hasVisibleActivities = true;
             procState = PROCESS_STATE_CUR_TOP;
-            state.bumpAllowStartFgsState(PROCESS_STATE_TOP);
-
             if (DEBUG_OOM_ADJ_REASON || logUid == appUid) {
                 reportOomAdjMessageLocked(TAG_OOM_ADJ, "Making top: " + app);
             }
@@ -1862,7 +1858,6 @@ public class OomAdjuster {
                 // The user is aware of this app, so make it visible.
                 adj = ProcessList.PERCEPTIBLE_APP_ADJ;
                 procState = PROCESS_STATE_FOREGROUND_SERVICE;
-                state.bumpAllowStartFgsState(PROCESS_STATE_FOREGROUND_SERVICE);
                 state.setAdjType("fg-service");
                 state.setCached(false);
                 schedGroup = ProcessList.SCHED_GROUP_DEFAULT;
@@ -2298,8 +2293,6 @@ public class OomAdjuster {
                                 // give them the best bound state after that.
                                 if (cr.hasFlag(Context.BIND_FOREGROUND_SERVICE)) {
                                     clientProcState = PROCESS_STATE_BOUND_FOREGROUND_SERVICE;
-                                    state.bumpAllowStartFgsState(
-                                            PROCESS_STATE_BOUND_FOREGROUND_SERVICE);
                                 } else if (mService.mWakefulness.get()
                                         == PowerManagerInternal.WAKEFULNESS_AWAKE
                                         && (cr.flags & Context.BIND_FOREGROUND_SERVICE_WHILE_AWAKE)
@@ -2313,7 +2306,6 @@ public class OomAdjuster {
                                 // Go at most to BOUND_TOP, unless requested to elevate
                                 // to client's state.
                                 clientProcState = PROCESS_STATE_BOUND_TOP;
-                                state.bumpAllowStartFgsState(PROCESS_STATE_BOUND_TOP);
                                 final boolean enabled = cstate.getCachedCompatChange(
                                         CACHED_COMPAT_CHANGE_PROCESS_CAPABILITY);
                                 if (enabled) {

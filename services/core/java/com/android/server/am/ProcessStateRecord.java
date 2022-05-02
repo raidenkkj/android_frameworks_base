@@ -296,13 +296,6 @@ final class ProcessStateRecord {
     private boolean mSystemNoUi;
 
     /**
-     * If the proc state is PROCESS_STATE_BOUND_FOREGROUND_SERVICE or above, it can start FGS.
-     * It must obtain the proc state from a persistent/top process or FGS, not transitive.
-     */
-    @GuardedBy("mService")
-    private int mAllowStartFgsState = PROCESS_STATE_NONEXISTENT;
-
-    /**
      * Debugging: primary thing impacting oom_adj.
      */
     @GuardedBy("mService")
@@ -1120,33 +1113,15 @@ final class ProcessStateRecord {
         mCurRawAdj = mSetRawAdj = mCurAdj = mSetAdj = mVerifiedAdj = ProcessList.INVALID_ADJ;
         mCurCapability = mSetCapability = PROCESS_CAPABILITY_NONE;
         mCurSchedGroup = mSetSchedGroup = ProcessList.SCHED_GROUP_BACKGROUND;
-        mCurProcState = mCurRawProcState = mSetProcState = mAllowStartFgsState =
-                PROCESS_STATE_NONEXISTENT;
+        mCurProcState = mCurRawProcState = mSetProcState = PROCESS_STATE_NONEXISTENT;
         for (int i = 0; i < mCachedCompatChanges.length; i++) {
             mCachedCompatChanges[i] = VALUE_INVALID;
         }
     }
 
     @GuardedBy("mService")
-    void resetAllowStartFgsState() {
-        mAllowStartFgsState = PROCESS_STATE_NONEXISTENT;
-    }
-
-    @GuardedBy("mService")
-    void bumpAllowStartFgsState(int newProcState) {
-        if (newProcState < mAllowStartFgsState) {
-            mAllowStartFgsState = newProcState;
-        }
-    }
-
-    @GuardedBy("mService")
-    int getAllowStartFgsState() {
-        return mAllowStartFgsState;
-    }
-
-    @GuardedBy("mService")
-    boolean isAllowedStartFgsState() {
-        return mAllowStartFgsState <= PROCESS_STATE_BOUND_FOREGROUND_SERVICE;
+    boolean isAllowedStartFgs() {
+        return mCurProcState <= PROCESS_STATE_BOUND_FOREGROUND_SERVICE;
     }
 
     @GuardedBy("mService")
@@ -1215,8 +1190,6 @@ final class ProcessStateRecord {
         pw.print(" setCapability=");
         ActivityManager.printCapabilitiesFull(pw, mSetCapability);
         pw.println();
-        pw.print(prefix); pw.print("allowStartFgsState=");
-        pw.println(mAllowStartFgsState);
         if (mHasShownUi || mApp.mProfile.hasPendingUiClean()) {
             pw.print(prefix); pw.print("hasShownUi="); pw.print(mHasShownUi);
             pw.print(" pendingUiClean="); pw.println(mApp.mProfile.hasPendingUiClean());
