@@ -18,6 +18,8 @@ package com.android.systemui.volume;
 
 import static android.media.AudioManager.RINGER_MODE_NORMAL;
 
+import android.app.ActivityManager;
+import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -93,10 +95,8 @@ import javax.inject.Inject;
 public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpable {
     private static final String TAG = Util.logTag(VolumeDialogControllerImpl.class);
 
-
     private static final int TOUCH_FEEDBACK_TIMEOUT_MS = 1000;
     private static final int DYNAMIC_STREAM_START_INDEX = 100;
-    private static final int VIBRATE_HINT_DURATION = 50;
     private static final AudioAttributes SONIFICIATION_VIBRATION_ATTRIBUTES =
             new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -125,13 +125,15 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     private final PackageManager mPackageManager;
     private final MediaRouter2Manager mRouter2Manager;
     private final WakefulnessLifecycle mWakefulnessLifecycle;
-    private AudioManager mAudio;
-    private IAudioService mAudioService;
+    private final AudioManager mAudio;
+    private final IAudioService mAudioService;
     private final NotificationManager mNoMan;
     private final SettingObserver mObserver;
     private final Receiver mReceiver = new Receiver();
     private final RingerModeObservers mRingerModeObservers;
     private final MediaSessions mMediaSessions;
+    private final KeyguardManager mKeyguardManager;
+    private final ActivityManager mActivityManager;
     protected C mCallbacks = new C();
     private final State mState = new State();
     protected final MediaSessionsCallbacks mMediaSessionsCallbacksW;
@@ -148,9 +150,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     private long mLastToggledRingerOn;
     private boolean mDeviceInteractive = true;
 
-    private boolean mDestroyed;
     private VolumePolicy mVolumePolicy;
-    private boolean mShowDndTile = true;
     @GuardedBy("this")
     private UserActivityListener mUserActivityListener;
 
@@ -182,7 +182,10 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
             IAudioService iAudioService,
             AccessibilityManager accessibilityManager,
             PackageManager packageManager,
-            WakefulnessLifecycle wakefulnessLifecycle) {
+            WakefulnessLifecycle wakefulnessLifecycle,
+            KeyguardManager keyguardManager,
+            ActivityManager activityManager
+    ) {
         mContext = context.getApplicationContext();
         mPackageManager = packageManager;
         mWakefulnessLifecycle = wakefulnessLifecycle;
@@ -207,11 +210,14 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         mVibrator = vibrator;
         mHasVibrator = mVibrator.hasVibrator();
         mAudioService = iAudioService;
+        mKeyguardManager = keyguardManager;
+        mActivityManager = activityManager;
 
         mAdaptivePlaybackEnabled = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.ADAPTIVE_PLAYBACK_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
         mAdaptivePlaybackTimeout = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.ADAPTIVE_PLAYBACK_TIMEOUT, 30000, UserHandle.USER_CURRENT);
+
 
         boolean accessibilityVolumeStreamActive = accessibilityManager
                 .isAccessibilityVolumeStreamActive();
@@ -259,7 +265,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     public void register() {
         setVolumeController();
         setVolumePolicy(mVolumePolicy);
-        showDndTile(mShowDndTile);
+        showDndTile();
         try {
             mMediaSessions.init();
         } catch (SecurityException e) {
@@ -284,10 +290,8 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         pw.println(VolumeDialogControllerImpl.class.getSimpleName() + " state:");
-        pw.print("  mDestroyed: "); pw.println(mDestroyed);
         pw.print("  mVolumePolicy: "); pw.println(mVolumePolicy);
         pw.print("  mState: "); pw.println(mState.toString(4));
-        pw.print("  mShowDndTile: "); pw.println(mShowDndTile);
         pw.print("  mHasVibrator: "); pw.println(mHasVibrator);
         synchronized (mMediaSessionsCallbacksW.mRemoteStreams) {
             pw.print("  mRemoteStreams: ");
@@ -305,7 +309,6 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     }
 
     public void setUserActivityListener(UserActivityListener listener) {
-        if (mDestroyed) return;
         synchronized (this) {
             mUserActivityListener = listener;
         }
@@ -316,7 +319,6 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     }
 
     public void getState() {
-        if (mDestroyed) return;
         mWorker.sendEmptyMessage(W.GET_STATE);
     }
 
@@ -338,48 +340,39 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     }
 
     public void getCaptionsComponentState(boolean fromTooltip) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.GET_CAPTIONS_COMPONENT_STATE, fromTooltip).sendToTarget();
     }
 
     public void notifyVisible(boolean visible) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.NOTIFY_VISIBLE, visible ? 1 : 0, 0).sendToTarget();
     }
 
     public void userActivity() {
-        if (mDestroyed) return;
         mWorker.removeMessages(W.USER_ACTIVITY);
         mWorker.sendEmptyMessage(W.USER_ACTIVITY);
     }
 
     public void setRingerMode(int value, boolean external) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.SET_RINGER_MODE, value, external ? 1 : 0).sendToTarget();
     }
 
     public void setZenMode(int value) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.SET_ZEN_MODE, value, 0).sendToTarget();
     }
 
     public void setExitCondition(Condition condition) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.SET_EXIT_CONDITION, condition).sendToTarget();
     }
 
     public void setStreamMute(int stream, boolean mute) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.SET_STREAM_MUTE, stream, mute ? 1 : 0).sendToTarget();
     }
 
     public void setStreamVolume(int stream, int level) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.SET_STREAM_VOLUME, stream, level).sendToTarget();
     }
 
     public void setActiveStream(int stream) {
-        if (mDestroyed) return;
         mWorker.obtainMessage(W.SET_ACTIVE_STREAM, stream, 0).sendToTarget();
     }
 
@@ -412,7 +405,6 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     }
 
     private void onNotifyVisibleW(boolean visible) {
-        if (mDestroyed) return;
         mAudio.notifyVolumeControllerVisible(mVolumeController, visible);
         if (!visible) {
             if (updateActiveStreamW(-1)) {
@@ -509,7 +501,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
             mCallbacks.onStateChanged(mState);
         }
         if (showUI) {
-            mCallbacks.onShowRequested(Events.SHOW_REASON_VOLUME_CHANGED);
+            onShowRequestedW(Events.SHOW_REASON_VOLUME_CHANGED);
         }
         if (showVibrateHint) {
             mCallbacks.onShowVibrateHint();
@@ -718,6 +710,11 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         return true;
     }
 
+    private void onShowRequestedW(int reason) {
+        mCallbacks.onShowRequested(reason, mKeyguardManager.isKeyguardLocked(),
+                mActivityManager.getLockTaskModeState());
+    }
+
     private void onSetRingerModeW(int mode, boolean external) {
         if (external) {
             mAudio.setRingerMode(mode);
@@ -760,9 +757,9 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         mCallbacks.onDismissRequested(reason);
     }
 
-    public void showDndTile(boolean visible) {
+    public void showDndTile() {
         if (D.BUG) Log.d(TAG, "showDndTile");
-        DndTile.setVisible(mContext, visible);
+        DndTile.setVisible(mContext, true);
     }
 
     private final class VC extends IVolumeController.Stub {
@@ -772,7 +769,6 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         public void displaySafeVolumeWarning(int flags) throws RemoteException {
             if (D.BUG) Log.d(TAG, "displaySafeVolumeWarning "
                     + Util.audioManagerFlagsToString(flags));
-            if (mDestroyed) return;
             mWorker.obtainMessage(W.SHOW_SAFETY_WARNING, flags, 0).sendToTarget();
         }
 
@@ -780,7 +776,6 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         public void volumeChanged(int streamType, int flags) throws RemoteException {
             if (D.BUG) Log.d(TAG, "volumeChanged " + AudioSystem.streamToString(streamType)
                     + " " + Util.audioManagerFlagsToString(flags));
-            if (mDestroyed) return;
             mWorker.obtainMessage(W.VOLUME_CHANGED, streamType, flags).sendToTarget();
         }
 
@@ -792,14 +787,12 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         @Override
         public void setLayoutDirection(int layoutDirection) throws RemoteException {
             if (D.BUG) Log.d(TAG, "setLayoutDirection");
-            if (mDestroyed) return;
             mWorker.obtainMessage(W.LAYOUT_DIRECTION_CHANGED, layoutDirection, 0).sendToTarget();
         }
 
         @Override
         public void dismiss() throws RemoteException {
             if (D.BUG) Log.d(TAG, "dismiss requested");
-            if (mDestroyed) return;
             mWorker.obtainMessage(W.DISMISS_REQUESTED, Events.DISMISS_REASON_VOLUME_CONTROLLER, 0)
                     .sendToTarget();
             mWorker.sendEmptyMessage(W.DISMISS_REQUESTED);
@@ -808,7 +801,6 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         @Override
         public void setA11yMode(int mode) {
             if (D.BUG) Log.d(TAG, "setA11yMode to " + mode);
-            if (mDestroyed) return;
             switch (mode) {
                 case VolumePolicy.A11Y_MODE_MEDIA_A11Y_VOLUME:
                     // "legacy" mode
@@ -871,7 +863,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         }
     }
 
-    class C implements Callbacks {
+    static class C implements Callbacks {
         private final Map<Callbacks, Handler> mCallbackMap = new ConcurrentHashMap<>();
 
         public void add(Callbacks callback, Handler handler) {
@@ -884,12 +876,15 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         }
 
         @Override
-        public void onShowRequested(final int reason) {
+        public void onShowRequested(
+                final int reason,
+                final boolean keyguardLocked,
+                final int lockTaskModeState) {
             for (final Map.Entry<Callbacks, Handler> entry : mCallbackMap.entrySet()) {
                 entry.getValue().post(new Runnable() {
                     @Override
                     public void run() {
-                        entry.getKey().onShowRequested(reason);
+                        entry.getKey().onShowRequested(reason, keyguardLocked, lockTaskModeState);
                     }
                 });
             }
@@ -996,7 +991,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
 
         @Override
         public void onAccessibilityModeChanged(Boolean showA11yStream) {
-            boolean show = showA11yStream == null ? false : showA11yStream;
+            boolean show = showA11yStream != null && showA11yStream;
             for (final Map.Entry<Callbacks, Handler> entry : mCallbackMap.entrySet()) {
                 entry.getValue().post(new Runnable() {
                     @Override
@@ -1010,7 +1005,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
         @Override
         public void onCaptionComponentStateChanged(
                 Boolean isComponentEnabled, Boolean fromTooltip) {
-            boolean componentEnabled = isComponentEnabled == null ? false : isComponentEnabled;
+            boolean componentEnabled = isComponentEnabled != null && isComponentEnabled;
             for (final Map.Entry<Callbacks, Handler> entry : mCallbackMap.entrySet()) {
                 entry.getValue().post(
                         () -> entry.getKey().onCaptionComponentStateChanged(
@@ -1285,7 +1280,7 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
                     mCallbacks.onStateChanged(mState);
                 }
                 if (showUI) {
-                    mCallbacks.onShowRequested(Events.SHOW_REASON_REMOTE_VOLUME_CHANGED);
+                    onShowRequestedW(Events.SHOW_REASON_REMOTE_VOLUME_CHANGED);
                 }
             }
         }
