@@ -5748,6 +5748,7 @@ public final class ActivityThread extends ClientTransactionHandler
             return;
         }
 
+        ActivityClient.getInstance().activityLocalRelaunch(r.token);
         // Initialize a relaunch request.
         final MergedConfiguration mergedConfiguration = new MergedConfiguration(
                 r.createdConfig != null
