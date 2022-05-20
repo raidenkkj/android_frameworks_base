@@ -636,6 +636,7 @@ public class DeviceIdleController extends SystemService
         synchronized (DeviceIdleController.this) {
             if (mStationaryListeners.size() > 0) {
                 startMonitoringMotionLocked();
+                scheduleMotionTimeoutAlarmLocked();
             }
         }
     };
@@ -3811,7 +3812,7 @@ public class DeviceIdleController extends SystemService
     void handleMotionDetectedLocked(long timeout, String type) {
         if (mStationaryListeners.size() > 0) {
             postStationaryStatusUpdated();
-            scheduleMotionTimeoutAlarmLocked();
+            cancelMotionTimeoutAlarmLocked();
             // We need to re-register the motion listener, but we don't want the sensors to be
             // constantly active or to churn the CPU by registering too early, register after some
             // delay.
