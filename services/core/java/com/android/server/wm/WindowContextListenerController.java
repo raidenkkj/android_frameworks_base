@@ -103,6 +103,9 @@ class WindowContextListenerController {
             return;
         }
         listener.unregister();
+        if (listener.mDeathRecipient != null) {
+            listener.mDeathRecipient.unlinkToDeath();
+        }
     }
 
     void dispatchPendingConfigurationIfNeeded(int displayId) {
