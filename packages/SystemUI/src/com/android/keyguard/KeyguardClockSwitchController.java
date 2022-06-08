@@ -220,23 +220,12 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
         mStatusArea = mView.findViewById(R.id.keyguard_status_area);
 
         if (mSmartspaceController.isEnabled()) {
-            mSmartspaceView = mSmartspaceController.buildAndConnectView(mView);
             View ksv = mView.findViewById(R.id.keyguard_slice_view);
             int ksvIndex = mStatusArea.indexOfChild(ksv);
             ksv.setVisibility(View.GONE);
 
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    MATCH_PARENT, WRAP_CONTENT);
-
-            mStatusArea.addView(mSmartspaceView, ksvIndex, lp);
-            int startPadding = getContext().getResources()
-                    .getDimensionPixelSize(R.dimen.below_clock_padding_start);
-            int endPadding = getContext().getResources()
-                    .getDimensionPixelSize(R.dimen.below_clock_padding_end);
-            mSmartspaceView.setPaddingRelative(startPadding, 0, endPadding, 0);
-
+            addSmartspaceView(ksvIndex);
             updateClockLayout();
-            mSmartspaceTransitionController.setLockscreenSmartspace(mSmartspaceView);
         }
 
         mSecureSettings.registerContentObserver(
@@ -261,6 +250,30 @@ public class KeyguardClockSwitchController extends ViewController<KeyguardClockS
         mView.setClockPlugin(null, mStatusBarStateController.getState());
 
         mSecureSettings.unregisterContentObserver(mDoubleLineClockObserver);
+    }
+
+    void onLocaleListChanged() {
+        if (mSmartspaceController.isEnabled()) {
+            int index = mStatusArea.indexOfChild(mSmartspaceView);
+            if (index >= 0) {
+                mStatusArea.removeView(mSmartspaceView);
+                addSmartspaceView(index);
+            }
+        }
+    }
+
+    private void addSmartspaceView(int index) {
+        mSmartspaceView = mSmartspaceController.buildAndConnectView(mView);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                MATCH_PARENT, WRAP_CONTENT);
+        mStatusArea.addView(mSmartspaceView, index, lp);
+        int startPadding = getContext().getResources().getDimensionPixelSize(
+                R.dimen.below_clock_padding_start);
+        int endPadding = getContext().getResources().getDimensionPixelSize(
+                R.dimen.below_clock_padding_end);
+        mSmartspaceView.setPaddingRelative(startPadding, 0, endPadding, 0);
+
+        mSmartspaceTransitionController.setLockscreenSmartspace(mSmartspaceView);
     }
 
     /**

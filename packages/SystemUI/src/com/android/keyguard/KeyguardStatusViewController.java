@@ -246,6 +246,7 @@ public class KeyguardStatusViewController extends ViewController<KeyguardStatusV
         @Override
         public void onLocaleListChanged() {
             refreshTime();
+            mKeyguardClockSwitchController.onLocaleListChanged();
         }
 
         @Override
