@@ -205,6 +205,14 @@ public class PhoneStatusBarView extends FrameLayout implements Callbacks, TunerS
     @Override
     protected void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+
+        mStatusBarContents = (ViewGroup) findViewById(R.id.status_bar_contents);
+
+        mLeftPad = mStatusBarContents.getPaddingStart();
+        mRightPad = mStatusBarContents.getPaddingEnd();
+        mBasePaddingTop = mStatusBarContents.getPaddingTop();
+        mBasePaddingBottom = mStatusBarContents.getPaddingBottom();
+    
         updateResources();
 
         // May trigger cutout space layout-ing
