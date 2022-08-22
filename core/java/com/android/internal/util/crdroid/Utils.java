@@ -126,50 +126,6 @@ public class Utils {
         }
     }
 
-  public static void showSysUIRestartDialog(Context context) {
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.sysui_restart_title)
-                .setMessage(R.string.sysui_restart_message)
-                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        restartSystemUI(context);
-                    }
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
-    }
-
-    public static void restartSystemUI(Context context) {
-        new restartSystemUITask(context).execute();
-    }
-
-    private static class restartSystemUITask extends AsyncTask<Void, Void, Void> {
-        private Context mContext;
-
-        public restartSystemUITask(Context context) {
-            super();
-            mContext = context;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                ActivityManager am =
-                        (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-                IActivityManager ams = ActivityManager.getService();
-                for (ActivityManager.RunningAppProcessInfo app: am.getRunningAppProcesses()) {
-                    if ("com.android.systemui".equals(app.processName)) {
-                    	ams.killApplicationProcess(app.processName, app.uid);
-                        break;
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-    }
-
     public static boolean hasNavbarByDefault(Context context) {
         boolean needsNav = context.getResources().getBoolean(
                 com.android.internal.R.bool.config_showNavigationBar);
