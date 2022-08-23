@@ -6019,6 +6019,12 @@ public final class Settings {
         public static final String QS_HEADER_DATE_SIZE = "qs_header_date_size";
 
         /**
+         * Date font size QS
+         * @hide
+         */
+        public static final String QS_WEATHER_POSITION = "qs_weather_position";
+
+        /**
          * Change quick settings tiles animation style
          * @hide
          */

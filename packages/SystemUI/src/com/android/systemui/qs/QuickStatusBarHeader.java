@@ -99,6 +99,8 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
             "system:" + Settings.System.RIGHT_PADDING;
     private static final String QS_HEADER_DATE_SIZE =
             "system:" + Settings.System.QS_HEADER_DATE_SIZE;
+    private static final String QS_WEATHER_POSITION =
+            "system:" + Settings.System.QS_WEATHER_POSITION;
 
     private final Handler mHandler = new Handler();
     public static final String QS_SHOW_INFO_HEADER = "qs_show_info_header";
@@ -174,6 +176,7 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
     private int mLeftPad;
     private int mRightPad;
     private int mQSDateSize;
+    private int mQQSWeather;
     private int mHeaderPaddingLeft;
     private int mHeaderPaddingRight;
     private int mWaterfallTopInset;
@@ -279,7 +282,8 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
                 NETWORK_TRAFFIC_LOCATION,
                 LEFT_PADDING,
                 RIGHT_PADDING,
-                QS_HEADER_DATE_SIZE);
+                QS_HEADER_DATE_SIZE,
+                QS_WEATHER_POSITION);
     }
 
     void onAttach(TintedIconManager iconManager,
@@ -866,6 +870,19 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
         setChipVisibility(mPrivacyChip.getVisibility() == View.VISIBLE);
     }
 
+    private void updateQSWeatherPosition() {
+        if (mQQSWeather == 0) {
+            mQsWeatherHeaderView.setVisibility(View.GONE);
+            mQsWeatherView.setVisibility(View.VISIBLE);
+        } else if (mQQSWeather == 1) {
+            mQsWeatherHeaderView.setVisibility(View.VISIBLE);
+            mQsWeatherView.setVisibility(View.GONE);
+        } else {
+            mQsWeatherHeaderView.setVisibility(View.VISIBLE);
+            mQsWeatherView.setVisibility(View.VISIBLE);
+        }
+    }
+
     @Override
     public void onTuningChanged(String key, String newValue) {
         switch (key) {
@@ -927,6 +944,11 @@ public class QuickStatusBarHeader extends FrameLayout implements TunerService.Tu
             	mQSDateSize = TunerService.parseInteger(newValue, 14);
             	mClockDateView.setTextSize(mQSDateSize);
             	break;
+            case QS_WEATHER_POSITION:
+                mQQSWeather =
+                       TunerService.parseInteger(newValue, 2);
+                updateQSWeatherPosition();
+                break;
             default:
                 break;
         }
