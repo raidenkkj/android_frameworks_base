@@ -553,9 +553,8 @@
     </style>
 
     <style name="MediaPlayer.ProgressBar" parent="@android:style/Widget.ProgressBar.Horizontal">
-        <item name="android:thumbTint">@*android:color/white</item>
+        <item name="android:thumbTint">?android:attr/textColorPrimary</item>
         <item name="android:thumb">@*android:drawable/seekbar_thumb_material_anim</item>
-        <item name="android:progressDrawable">@drawable/media_squiggly_progress</item>
         <item name="android:progressTint">@*android:color/white</item>
         <item name="android:progressBackgroundTint">@*android:color/system_neutral1_100</item>
         <item name="android:clickable">true</item>
@@ -563,12 +562,12 @@
     </style>
 
     <style name="MediaPlayer.Subtitle" parent="MediaPlayer">
-        <item name="android:textColor">@*android:color/white</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
     <style name="MediaPlayer.Action" parent="@android:style/Widget.Material.Button.Borderless.Small">
         <item name="android:background">@drawable/qs_media_light_source</item>
-        <item name="android:tint">@*android:color/white</item>
+        <item name="android:tint">?android:attr/textColorPrimary</item>
         <item name="android:stateListAnimator">@anim/media_button_state_list_animator</item>
         <item name="android:paddingTop">8dp</item>
         <item name="android:paddingStart">12dp</item>
@@ -588,11 +587,15 @@
 
     <style name="MediaPlayer.SolidButton">
         <item name="android:backgroundTint">@color/media_player_solid_button_bg</item>
-        <item name="android:tint">@*android:color/white</item>
-        <item name="android:textColor">@*android:color/white</item>
+        <item name="android:tint">?android:attr/colorPrimary</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
 
-    <style name="MediaPlayer.AppIcon" />
+    <style name="MediaPlayer.AppIcon">
+        <item name="android:background">@drawable/qs_media_icon_background</item>
+        <item name="android:backgroundTint">@color/media_player_solid_button_bg</item>
+        <item name="android:padding">4dp</item>
+    </style>
 
     <style name="MediaPlayer.Album">
         <item name="android:backgroundTint">@color/media_player_album_bg</item>

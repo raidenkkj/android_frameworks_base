@@ -287,12 +287,13 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             @Override
             public void onMediaDataLoaded(@NonNull String key,
                     @Nullable String oldKey, @NonNull MediaData data, boolean immediately,
-                    int receivedSmartspaceCardLatency, boolean isSsReactivated) {
+                    int receivedSmartspaceCardLatency) {
             }
 
             @Override
             public void onSmartspaceMediaDataLoaded(@NonNull String key,
-                    @NonNull SmartspaceMediaData data, boolean shouldPrioritize) {
+                    @NonNull SmartspaceMediaData data, boolean shouldPrioritize,
+                    boolean isSsReactivated) {
             }
 
             @Override
@@ -361,12 +362,13 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             @Override
             public void onMediaDataLoaded(@NonNull String key,
                     @Nullable String oldKey, @NonNull MediaData data, boolean immediately,
-                    int receivedSmartspaceCardLatency, boolean isSsReactivated) {
+                    int receivedSmartspaceCardLatency) {
             }
 
             @Override
             public void onSmartspaceMediaDataLoaded(@NonNull String key,
-                    @NonNull SmartspaceMediaData data, boolean shouldPrioritize) {
+                    @NonNull SmartspaceMediaData data, boolean shouldPrioritize,
+                    boolean isSsReactivated) {
 
             }
 

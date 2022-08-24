@@ -5682,34 +5682,6 @@ public final class Settings {
         public static final String FLASHLIGHT_ON_CALL_RATE = "flashlight_on_call_rate";
 
         /**
-         * Whether or not artwork should be shown as media notification background.
-         * Default 0.
-         * @hide
-         */
-        public static final String MEDIA_ARTWORK_ENABLED = "media_artwork_enabled";
-
-        /**
-         * Whether or not to enable artwork blur.
-         * Default 0.
-         * @hide
-         */
-        public static final String MEDIA_ARTWORK_BLUR_ENABLED = "media_artwork_blur_enabled";
-
-        /**
-         * Blur radius of artwork.
-         * Default 1.0 .
-         * @hide
-         */
-        public static final String MEDIA_ARTWORK_BLUR_RADIUS = "media_artwork_blur_radius";
-
-        /**
-         * Fade filter level of artwork.
-         * Default 30.
-         * @hide
-         */
-        public static final String MEDIA_ARTWORK_FADE_PERCENT = "media_artwork_fade_percent";
-
-        /**
          * Whether to enable the pixel navbar animation
          * @hide
          */

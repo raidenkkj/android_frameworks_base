@@ -1385,11 +1385,9 @@ public class NotificationPanelViewController extends PanelViewController {
         int userSwitcherPreferredY = mStatusBarHeaderHeightKeyguard;
         boolean bypassEnabled = mKeyguardBypassController.getBypassEnabled();
         final boolean hasVisibleNotifications = mNotificationStackScrollLayoutController
-                .getVisibleNotificationCount() != 0
-                || mMediaDataManager.hasActiveMediaOrRecommendation();
+                .getVisibleNotificationCount() != 0 || mMediaDataManager.hasActiveMedia();
         boolean splitShadeWithActiveMedia =
-                mShouldUseSplitNotificationShade
-                        && mMediaDataManager.hasActiveMediaOrRecommendation();
+                mShouldUseSplitNotificationShade && mMediaDataManager.hasActiveMedia();
         if ((hasVisibleNotifications && !mShouldUseSplitNotificationShade)
                 || (splitShadeWithActiveMedia && !mDozing)) {
             mKeyguardStatusViewController.displayClock(SMALL);
@@ -1455,8 +1453,7 @@ public class NotificationPanelViewController extends PanelViewController {
 
     private void updateKeyguardStatusViewAlignment(boolean animate) {
         boolean hasVisibleNotifications = mNotificationStackScrollLayoutController
-                .getVisibleNotificationCount() != 0
-                || mMediaDataManager.hasActiveMediaOrRecommendation();
+                .getVisibleNotificationCount() != 0 || mMediaDataManager.hasActiveMedia();
         boolean shouldBeCentered =
                 !mShouldUseSplitNotificationShade || !hasVisibleNotifications || mDozing;
         if (mStatusViewCentered != shouldBeCentered) {
@@ -2699,7 +2696,7 @@ public class NotificationPanelViewController extends PanelViewController {
         float endPosition = 0;
         if (pxAmount > 0.0f) {
             if (mNotificationStackScrollLayoutController.getVisibleNotificationCount() == 0
-                    && !mMediaDataManager.hasActiveMediaOrRecommendation()) {
+                    && !mMediaDataManager.hasActiveMedia()) {
                 // No notifications are visible, let's animate to the height of qs instead
                 if (mQs != null) {
                     // Let's interpolate to the header height instead of the top padding,
