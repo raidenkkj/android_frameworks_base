@@ -227,6 +227,11 @@ public class AnimatableClockController extends ViewController<AnimatableClockVie
              || font.equalsIgnoreCase("jtleonor")
              || font.equalsIgnoreCase("linotte")
              || font.equalsIgnoreCase("misans")
+             || font.equalsIgnoreCase("sans-serif")
+             || font.equalsIgnoreCase("accuratist")
+             || font.equalsIgnoreCase("inter_custom")
+             || font.equalsIgnoreCase("opposans")
+             || font.equalsIgnoreCase("robotocondensed")
              || font.equalsIgnoreCase("nokiapure")) {
           return true;
         } else {
