@@ -61,7 +61,7 @@
     <dimen name="enhanced_smartspace_icon_margin">8.0dip</dimen>
     <dimen name="enhanced_smartspace_icon_size">20.0dip</dimen>
     <dimen name="enhanced_smartspace_margin_start_launcher">16.0dip</dimen>
-    <dimen name="enhanced_smartspace_padding_top">22.0dip</dimen>
+    <dimen name="enhanced_smartspace_padding_top">0.0dip</dimen>
     <dimen name="enhanced_smartspace_secondary_card_corner_radius">@*android:dimen/config_dialogCornerRadius</dimen>
     <dimen name="enhanced_smartspace_secondary_card_end_margin">1.0dip</dimen>
     <dimen name="enhanced_smartspace_secondary_card_start_margin">8.0dip</dimen>
