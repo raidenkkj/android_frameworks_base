@@ -34,7 +34,7 @@ import javax.inject.Inject
 private const val TAG = "MediaArtworkProcessor"
 private const val COLOR_ALPHA = 255
 private const val BLUR_RADIUS = 1f
-private const val DOWNSAMPLE = 1
+private const val DOWNSAMPLE = 2
 
 @SysUISingleton
 class MediaArtworkProcessor @Inject constructor() {
@@ -69,7 +69,7 @@ class MediaArtworkProcessor @Inject constructor() {
                     Bitmap.Config.ARGB_8888)
 
             input = Allocation.createFromBitmap(renderScript, inBitmap,
-                    Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_GRAPHICS_TEXTURE)
+                    Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SHARED)
             output = Allocation.createFromBitmap(renderScript, outBitmap)
 
             blur.setRadius(BLUR_RADIUS)
