@@ -325,7 +325,7 @@ public class ImageHelper {
 
     public static Bitmap getBlurredImage(Context context, Bitmap image) {
     	mLSBlurRadius = getLSBlurRadius(context);
-        return getBlurredImage(context, image, mLSBlurRadius / 2);
+        return getBlurredImage(context, image, mLSBlurRadius / 3);
     }
 
     public static Bitmap getBlurredImage(Context context, Bitmap image, float radius) {
@@ -334,12 +334,14 @@ public class ImageHelper {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+            
         Bitmap bitmap = Bitmap.createBitmap(
                 image.getWidth(), image.getHeight(),
                 Bitmap.Config.ARGB_8888);
+
         RenderScript renderScript = RenderScript.create(context);
-        Allocation blurInput = Allocation.createFromBitmap(renderScript, image);
+        Allocation blurInput = Allocation.createFromBitmap(renderScript, image,
+                    Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SHARED);
         Allocation blurOutput = Allocation.createFromBitmap(renderScript, bitmap);
 
         ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(renderScript,
@@ -355,7 +357,7 @@ public class ImageHelper {
 
     public static Bitmap getGrayscaleBlurredImage(Context context, Bitmap image) {
     	mLSBlurRadius = getLSBlurRadius(context);
-        return getGrayscaleBlurredImage(context, image, mLSBlurRadius / 2);
+        return getGrayscaleBlurredImage(context, image, mLSBlurRadius / 3);
     }
 
     public static Bitmap getGrayscaleBlurredImage(Context context, Bitmap image, float radius) {
