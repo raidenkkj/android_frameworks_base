@@ -161,6 +161,8 @@ public class VolumeDialogImpl implements VolumeDialog,
             "system:" + Settings.System.VOLUME_DIALOG_TIMEOUT;
     public static final String SHOW_APP_VOLUME =
             "system:" + Settings.System.SHOW_APP_VOLUME;
+    public static final String VOLUME_MEDIA_OUTPUT_TOGGLE =
+            "system:" + Settings.System.VOLUME_MEDIA_OUTPUT_TOGGLE;
 
     private static final long USER_ATTEMPT_GRACE_PERIOD = 1000;
     private static final int UPDATE_ANIMATION_DURATION = 80;
@@ -307,6 +309,8 @@ public class VolumeDialogImpl implements VolumeDialog,
     private int mTimeOutDesired, mTimeOut;
 
     private boolean mShowAppVolume = true;
+    
+    private boolean mShowMediaController = true;
 
     public VolumeDialogImpl(
             Context context,
@@ -359,6 +363,7 @@ public class VolumeDialogImpl implements VolumeDialog,
         }
         mTunerService.addTunable(mTunable, VOLUME_DIALOG_TIMEOUT);
         mTunerService.addTunable(mTunable, SHOW_APP_VOLUME);
+        mTunerService.addTunable(mTunable, VOLUME_MEDIA_OUTPUT_TOGGLE);
 
         initDimens();
     }
@@ -759,6 +764,9 @@ public class VolumeDialogImpl implements VolumeDialog,
             } else if (SHOW_APP_VOLUME.equals(key)) {
                 mShowAppVolume =  TunerService.parseIntegerSwitch(newValue, true);
                 initAppVolumeH();
+            } else if (VOLUME_MEDIA_OUTPUT_TOGGLE.equals(key)) {
+                mShowMediaController =  TunerService.parseIntegerSwitch(newValue, true);
+                initSettingsH(mActivityManager.getLockTaskModeState());
             }
         }
     };
@@ -1238,7 +1246,11 @@ public class VolumeDialogImpl implements VolumeDialog,
     }
 
     private boolean isMediaControllerAvailable(MediaController mediaController) {
-        return mediaController != null && !TextUtils.isEmpty(mediaController.getPackageName());
+	if (mShowMediaController) {
+          return mediaController != null && !TextUtils.isEmpty(mediaController.getPackageName());
+        } else {
+          return false;
+        }
     }
 
     private boolean isBluetoothA2dpConnected() {
