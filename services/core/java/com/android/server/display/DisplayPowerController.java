@@ -2216,8 +2216,6 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
     }
 
     private void putAutoBrightnessAdjustmentSetting(float adjustment) {
-        if (Float.isNaN(adjustment))
-            return;
         if (mDisplayId == Display.DEFAULT_DISPLAY) {
             mAutoBrightnessAdjustment = adjustment;
             Settings.System.putFloatForUser(mContext.getContentResolver(),
